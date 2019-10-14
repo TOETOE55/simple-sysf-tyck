@@ -1,4 +1,4 @@
-use crate::ast::{Ty, TyRef, DBI, Tm, TmRef};
+use crate::ast::{Tm, TmRef, Ty, TyRef, DBI};
 
 pub struct TyExhibit {
     pub exhibit: Vec<Ty>,
@@ -6,9 +6,7 @@ pub struct TyExhibit {
 
 impl TyExhibit {
     pub fn new() -> Self {
-        Self {
-            exhibit: vec![],
-        }
+        Self { exhibit: vec![] }
     }
 
     pub fn var(&mut self, dbi: DBI) -> TyRef {
@@ -35,18 +33,24 @@ impl TyExhibit {
         }
     }
 
-    pub fn subst(&mut self, gen: TyRef, dbi: DBI, spec: TyRef) -> TyRef {
+    pub fn subst(&mut self, gen: TyRef, spec: TyRef, dbi: DBI) -> TyRef {
         match self.deref(gen) {
-            Ty::Var(i) => if i == dbi { spec } else { gen },
+            Ty::Var(i) => {
+                if i == dbi {
+                    spec
+                } else {
+                    gen
+                }
+            }
             Ty::ForAll(ty) => {
-                let new_ty = self.subst(ty, dbi+1, spec);
+                let new_ty = self.subst(ty, dbi + 1, spec);
                 self.for_all(new_ty)
-            },
+            }
             Ty::Arr(domain, codomain) => {
-                let new_domain = self.subst(domain, dbi+1, spec);
-                let new_codomain = self.subst(codomain, dbi+1, spec);
+                let new_domain = self.subst(domain, dbi + 1, spec);
+                let new_codomain = self.subst(codomain, dbi + 1, spec);
                 self.arr(new_domain, new_codomain)
-            },
+            }
         }
     }
 
@@ -71,16 +75,13 @@ impl TyExhibit {
     }
 }
 
-
 pub struct TmExhibit {
     pub exhibit: Vec<Tm>,
 }
 
 impl TmExhibit {
     pub fn new() -> Self {
-        Self {
-            exhibit: vec![],
-        }
+        Self { exhibit: vec![] }
     }
 
     pub fn var(&mut self, dbi: DBI) -> TmRef {
@@ -112,9 +113,13 @@ impl TmExhibit {
         match (self.deref(a), self.deref(b)) {
             (Tm::Var(i), Tm::Var(j)) => i == j,
             (Tm::Abs(ty1, b1), Tm::Abs(ty2, b2)) => ty_exh.eq(ty1, ty2) && self.eq(b1, b2, ty_exh),
-            (Tm::App(ta, tb), Tm::App(tc, td)) => self.eq(ta, tc, ty_exh) && self.eq(tb, td, ty_exh),
+            (Tm::App(ta, tb), Tm::App(tc, td)) => {
+                self.eq(ta, tc, ty_exh) && self.eq(tb, td, ty_exh)
+            }
             (Tm::Gen(b1), Tm::Gen(b2)) => self.eq(b1, b2, ty_exh),
-            (Tm::Inst(tm1, ty1), Tm::Inst(tm2, ty2)) => self.eq(tm1, tm2, ty_exh) && ty_exh.eq(ty1, ty2),
+            (Tm::Inst(tm1, ty1), Tm::Inst(tm2, ty2)) => {
+                self.eq(tm1, tm2, ty_exh) && ty_exh.eq(ty1, ty2)
+            }
             _ => false,
         }
     }

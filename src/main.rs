@@ -1,7 +1,7 @@
 mod ast;
+mod check;
 mod exhibit;
 mod tcm;
-mod check;
 
 fn main() {
     println!("Hello, world!");
