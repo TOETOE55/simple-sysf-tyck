@@ -1,4 +1,4 @@
-use crate::ast::{Tm, TmRef, Ty, TyRef, DBI};
+use crate::ast::{Tm, TmExpr, TmRef, Ty, TyExpr, TyRef, DBI};
 
 pub struct TyExhibit {
     pub exhibit: Vec<Ty>,
@@ -73,6 +73,31 @@ impl TyExhibit {
     pub fn deref(&self, ty: TyRef) -> Ty {
         (self.exhibit)[ty]
     }
+
+    pub fn quote(&self, ty: TyRef) -> TyExpr {
+        match self.deref(ty) {
+            Ty::Var(i) => TyExpr::Var(i),
+            Ty::ForAll(ty) => TyExpr::ForAll(Box::new(self.quote(ty))),
+            Ty::Arr(domain, codomain) => {
+                TyExpr::Arr(Box::new(self.quote(domain)), Box::new(self.quote(codomain)))
+            }
+        }
+    }
+
+    pub fn alloc(&mut self, ty: &TyExpr) -> TyRef {
+        match ty {
+            TyExpr::Var(dbi) => self.var(*dbi),
+            TyExpr::ForAll(ty) => {
+                let ty_ref = self.alloc(ty);
+                self.for_all(ty_ref)
+            }
+            TyExpr::Arr(domain, codomain) => {
+                let domain = self.alloc(domain);
+                let codomain = self.alloc(codomain);
+                self.arr(domain, codomain)
+            }
+        }
+    }
 }
 
 pub struct TmExhibit {
@@ -142,5 +167,47 @@ impl TmExhibit {
 
     pub fn deref(&self, tm: TmRef) -> Tm {
         (self.exhibit)[tm]
+    }
+
+    pub fn quote(&self, tm: TmRef, ty_exh: &TyExhibit) -> TmExpr {
+        match self.deref(tm) {
+            Tm::Var(i) => TmExpr::Var(i),
+            Tm::Abs(param_ty, body) => {
+                TmExpr::Abs(ty_exh.quote(param_ty), Box::new(self.quote(body, ty_exh)))
+            }
+            Tm::App(opr, opt) => TmExpr::App(
+                Box::new(self.quote(opr, ty_exh)),
+                Box::new(self.quote(opt, ty_exh)),
+            ),
+            Tm::Gen(body) => TmExpr::Gen(Box::new(self.quote(body, ty_exh))),
+            Tm::Inst(expr, ty) => {
+                TmExpr::Inst(Box::new(self.quote(expr, ty_exh)), ty_exh.quote(ty))
+            }
+        }
+    }
+
+    pub fn alloc(&mut self, tm: &TmExpr, ty_exh: &mut TyExhibit) -> TmRef {
+        match tm {
+            TmExpr::Var(dbi) => self.var(*dbi),
+            TmExpr::Abs(param_ty, body) => {
+                let param_ty = ty_exh.alloc(param_ty);
+                let body = self.alloc(body, ty_exh);
+                self.abs(param_ty, body)
+            }
+            TmExpr::App(opr, opt) => {
+                let opr = self.alloc(opr, ty_exh);
+                let opt = self.alloc(opt, ty_exh);
+                self.app(opr, opt)
+            }
+            TmExpr::Gen(body) => {
+                let body = self.alloc(body, ty_exh);
+                self.gen(body)
+            }
+            TmExpr::Inst(expr, ty) => {
+                let expr = self.alloc(expr, ty_exh);
+                let ty = ty_exh.alloc(ty);
+                self.inst(expr, ty)
+            }
+        }
     }
 }
