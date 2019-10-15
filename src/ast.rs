@@ -35,24 +35,24 @@ pub enum TmExpr {
     Inst(Box<TmExpr>, TyExpr),
 }
 
-impl std::fmt::Display for TyExpr {
+impl std::fmt::Debug for TyExpr {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> Result<(), std::fmt::Error> {
         match self {
             TyExpr::Var(i) => write!(f, "{}", i),
-            TyExpr::ForAll(ty) => write!(f, "(∀. {})", ty),
-            TyExpr::Arr(domain, codomain) => write!(f, "({} → {})", domain, codomain),
+            TyExpr::ForAll(ty) => write!(f, "(∀. {:?})", ty),
+            TyExpr::Arr(domain, codomain) => write!(f, "{:?} → {:?}", domain, codomain),
         }
     }
 }
 
-impl std::fmt::Display for TmExpr {
+impl std::fmt::Debug for TmExpr {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> Result<(), std::fmt::Error> {
         match self {
             TmExpr::Var(i) => write!(f, "{}", i),
-            TmExpr::Abs(ty, body) => write!(f, "(λ {}. {})", ty, body),
-            TmExpr::App(opr, opt) => write!(f, "({} {})", opr, opt),
-            TmExpr::Gen(body) => write!(f, "(Λ. {})", body),
-            TmExpr::Inst(tm, ty) => write!(f, "({}[{}])", tm, ty),
+            TmExpr::Abs(ty, body) => write!(f, "λ {:?}. {:?}", ty, body),
+            TmExpr::App(opr, opt) => write!(f, "({:?} {:?})", opr, opt),
+            TmExpr::Gen(body) => write!(f, "Λ. {:?}", body),
+            TmExpr::Inst(tm, ty) => write!(f, "{:?}[{:?}]", tm, ty),
         }
     }
 }

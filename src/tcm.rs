@@ -1,4 +1,5 @@
-use crate::ast::TyRef;
+use crate::ast::{TmRef, TyRef};
+use crate::check::infer;
 use crate::exhibit::{TmExhibit, TyExhibit};
 
 pub type TCM<T> = Result<T, TCE>;
@@ -11,11 +12,15 @@ pub struct TCS {
 }
 
 impl TCS {
-    pub fn empty(tm_exh: TmExhibit, ty_exh: TyExhibit) -> Self {
+    pub fn new(tm_exh: TmExhibit, ty_exh: TyExhibit) -> Self {
         Self {
             tm_exh,
             ty_exh,
             gamma: vec![],
         }
+    }
+
+    pub fn infer(&mut self, tm: TmRef) -> TCM<TyRef> {
+        infer(self, tm)
     }
 }

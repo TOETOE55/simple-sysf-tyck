@@ -39,16 +39,16 @@ impl TyExhibit {
                 if i == dbi {
                     spec
                 } else {
-                    gen
+                    self.var(i - 1)
                 }
             }
             Ty::ForAll(ty) => {
-                let new_ty = self.subst(ty, dbi + 1, spec);
+                let new_ty = self.subst(ty, spec, dbi + 1);
                 self.for_all(new_ty)
             }
             Ty::Arr(domain, codomain) => {
-                let new_domain = self.subst(domain, dbi + 1, spec);
-                let new_codomain = self.subst(codomain, dbi + 1, spec);
+                let new_domain = self.subst(domain, spec, dbi);
+                let new_codomain = self.subst(codomain, spec, dbi);
                 self.arr(new_domain, new_codomain)
             }
         }
